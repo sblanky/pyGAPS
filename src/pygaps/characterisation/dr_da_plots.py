@@ -219,17 +219,23 @@ def da_plot(
     iso_temp = isotherm.temperature
     liquid_density = adsorbate.liquid_density(iso_temp)
 
+    try: # gas density at stp
+        gas_density = adsorbate.gas_density(298)
+    except CalculationError:
+        if adsorbate == 'nitrogen':
+            gas_density = 0.00125
+
     # Read data in
     pressure, loading = get_iso_loading_and_pressure_ordered(
         isotherm, branch, {
-            "loading_basis": "molar",
-            "loading_unit": "mol"
+            "loading_basis": "volume_gas",
+            "loading_unit": "cm3"
         }, {"pressure_mode": "relative"}
     )
 
     # Call the raw function
     (
-        microp_volume,
+        microp_capacity,
         potential,
         exp,
         slope,
@@ -247,6 +253,9 @@ def da_plot(
         p_limits,
     )
 
+    #microp_volume = microp_capacity * 0.0015500
+    density_conversion_factor = gas_density / liquid_density
+    microp_volume = microp_capacity * density_conversion_factor
     if verbose:
         if find_exp:
             logger.info(f"Exponent is: {exp:.2g}")
@@ -255,7 +264,7 @@ def da_plot(
         # Plot
         from pygaps.graphing.calc_graphs import dra_plot
         dra_plot(
-            log_v_adj(loading, molar_mass, liquid_density),
+            log_v_adj(loading),
             log_p_exp(pressure, exp),
             minimum,
             maximum,
@@ -265,6 +274,7 @@ def da_plot(
         )
 
     res = {
+        "limiting_micropore_capacity": microp_capacity,
         "pore_volume": microp_volume,
         "adsorption_potential": potential,
         'corr_coef': corr_coef,
@@ -363,7 +373,7 @@ def da_plot_raw(
     loading = loading[minimum:maximum + 1]
 
     # Calculate x-axis points
-    logv = log_v_adj(loading, molar_mass, liquid_density)
+    logv = log_v_adj(loading)
 
     def dr_fit(exp, ret=False):
         """Linear fit."""
@@ -384,12 +394,12 @@ def da_plot_raw(
     slope, intercept, corr_coef = dr_fit(exp, ret=True)
 
     # Calculate final result values
-    microp_volume = 10**intercept
+    microp_capacity = 10**intercept
     potential = (-numpy.log(10)**(exp - 1) *
                  (constants.gas_constant * iso_temp)**(exp) / slope)**(1 / exp) / 1000
 
     return (
-        microp_volume,
+        microp_capacity,
         potential,
         exp,
         slope,
@@ -400,9 +410,9 @@ def da_plot_raw(
     )
 
 
-def log_v_adj(loading, molar_mass, liquid_density):
+def log_v_adj(loading):
     """Base 10 logarithm of volumetric uptake."""
-    return numpy.log10(loading * molar_mass / liquid_density)
+    return numpy.log10(loading)
 
 
 def log_p_exp(pressure, exp):
