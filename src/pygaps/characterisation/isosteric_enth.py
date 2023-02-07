@@ -146,7 +146,7 @@ def isosteric_enthalpy(
             loading,
             iso_enthalpy,
             std_errs,
-            isotherms[0],
+            isotherms[0].units,
         )
 
     return {
