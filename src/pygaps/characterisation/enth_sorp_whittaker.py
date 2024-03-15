@@ -157,6 +157,7 @@ def enthalpy_sorption_whittaker(
                     't': [0., np.inf],
                     't1': [0., np.inf],
                     't2': [0., np.inf],
+                    't3': [0., np.inf],
                     'Ea': [0., np.inf],
                 }
         param_bounds = kwargs.get('param_bounds', param_bounds)
@@ -180,8 +181,8 @@ def enthalpy_sorption_whittaker(
     if not pgm.is_model_whittaker(model):
         raise ParameterError(
             f'''
-            Whittaker method requires modelling with a Toth-type model, i.e.
-            {*pgm._WHITTAKER_MODELS,}
+            Whittaker method requires modelling with a Whittaker-consistent 
+            model, i.e. {*pgm._WHITTAKER_MODELS_EXTENDED,}
             '''
         )
 
@@ -191,23 +192,20 @@ def enthalpy_sorption_whittaker(
             100
         )
 
-    # Local constants and model parameters
-    T = isotherm.temperature
+    # model parameters
     params = isotherm.model.params
     n_m_list = [val for param, val in params.items() if 'n_m' in param]
     K_list = [val for param, val in params.items() if 'K' in param]
     t_list = [val for param, val in params.items() if 't' in param]
-    if model.lower() == 'chemiphysisorption':  # so list lengths match
-        t_list.append(1)
-    if len(t_list) == 0:  # so list lengths match
-        t_list = [1 for i in range(len(K_list))]
+    while len(t_list) != len(n_m_list):
+        t_list.append(1)  # match list lengths for mixed Langmuir/Toth models
 
     pressure = [pressure_at(isotherm, n) for n in loading]
     enthalpy = enthalpy_sorption_whittaker_raw(
         pressure, loading,
         p_sat, p_c, p_t,
         K_list, n_m_list, t_list,
-        T,
+        isotherm.temperature,
         isotherm.adsorbate,
     )
 

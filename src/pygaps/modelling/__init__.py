@@ -29,6 +29,9 @@ _MODELS = [
     "Toth",
     "DSToth",
     "ChemiPhysisorption",
+    "TSToth",
+    "DSTothLangmuir",
+    "TothDSLangmuir",
     "JensenSeaton",
     "FHVST",
     "WVST",
@@ -67,8 +70,7 @@ _IAST_MODELS = [
     "JensenSeaton",
 ]
 
-
-# This list has all the models which are consistent with Whittaker method.
+# This list has all the typical models which are consistent with Whittaker method.
 # List may be updated as Whittaker theory is improved.
 _WHITTAKER_MODELS = [
     "Langmuir",
@@ -79,6 +81,15 @@ _WHITTAKER_MODELS = [
     "ChemiPhysisorption",
 ]
 
+# Includes all _WHITTAKER_MODELS, and some extra
+_WHITTAKER_MODELS_EXTENDED = [
+    *_WHITTAKER_MODELS,
+    *[
+        "TSToth",
+        "DSTothLangmuir",
+        "TothDSLangmuir",
+    ]
+]
 # This list has all Toth-derived models
 _TOTH_DERIVATIVE_MODELS = [
     "Toth",
@@ -156,7 +167,7 @@ def is_model_whittaker(model_name: str) -> bool:
         Whether it is applicable or not.
 
     """
-    return model_name.lower() in map(str.lower, _WHITTAKER_MODELS)
+    return model_name.lower() in map(str.lower, _WHITTAKER_MODELS_EXTENDED)
 
 
 def is_model_langmuir_derivative(model_name: str) -> bool:
