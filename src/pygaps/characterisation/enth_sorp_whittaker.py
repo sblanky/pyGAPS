@@ -179,6 +179,16 @@ def enthalpy_sorption_whittaker(
         T,
     )
 
+    if any(h<0 for h in enthalpy):
+        raise ParameterError(
+            f'''
+            This calculation returned negative values for isosteric enthalpy.
+            You may wish to adjust the model parameters in order to obtain a
+            reasonable result.
+            {enthalpy}
+            '''
+        )
+
     stderr = stderr_estimate(len(isotherm.model.params), isotherm.model.rmse, enthalpy)
 
     if verbose:
